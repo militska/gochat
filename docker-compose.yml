@@ -1,0 +1,9 @@
+version: '3.2'
+services:
+  app:
+    build:
+      context: ./docker/go
+    restart: on-failure
+    working_dir: /go/src/myapp
+    volumes:
+      - .:/go/src/myapp
