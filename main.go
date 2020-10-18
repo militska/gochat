@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,7 +16,15 @@ func main() {
 
 	ch := make(chan Chat, 100)
 
-	go observer(ch)
+	msg := Chat{Message: "ttt", User: "militska", Ip: "11"}
+
+	rdb := getRedisClient()
+	err := rdb.Set("key2", &msg, 0).Err()
+	if err != nil {
+		panic(err)
+	}
+
+	//go observer(ch)
 	initHttpServer(ch)
 }
 
@@ -28,21 +37,18 @@ func observer(ch chan Chat) {
 
 }
 func initHttpServer(ch chan Chat) {
+
 	s := &http.Server{
-		Addr:           ":8071",
+		Addr:           ":8074",
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	//cores := runtime.NumCPU() - 4
+	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = 100
 
+	go setToRedis(ch)
 	ChatHandler(ch)
-
-	//for i := 1; i < cores; i++ {
-	//	go internalSend(ch)
-	//}
-
 	log.Fatal(s.ListenAndServe())
 
 }
@@ -51,4 +57,26 @@ type Chat struct {
 	Message string
 	User    string
 	Ip      string
+}
+
+func (m *Chat) MarshalBinary() ([]byte, error) {
+	return json.Marshal(m)
+}
+
+func setToRedis(ch chan Chat) {
+	for {
+		message := <-ch
+
+		fmt.Print(message)
+
+		rdb := getRedisClient()
+		err := rdb.Set(message.User, &message, 0).Err()
+
+		if err != nil {
+			fmt.Print(err)
+			panic(err)
+		}
+
+		fmt.Print(rdb.Get("militska"))
+	}
 }
