@@ -8,16 +8,14 @@ import (
 )
 
 func ChatHandler(ch chan Chat) {
-
 	http.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
-
 		if r.Header.Get("Content-Type") != "application/json" {
 			_, _ = w.Write([]byte("Content-Type must be application/json"))
 			w.WriteHeader(400)
 			return
 		}
 
+		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(400)
 			return

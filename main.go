@@ -10,6 +10,37 @@ import (
 	"time"
 )
 
+//
+//var addr = flag.String("addr", "172.22.0.2:8082", "http service address fpr ws")
+//
+//var upgrader = websocket.Upgrader{} // use default options
+//
+//func echo(w http.ResponseWriter, r *http.Request) {
+//	c, err := upgrader.Upgrade(w, r, nil)
+//	if err != nil {
+//		log.Print("upgrade:", err)
+//		return
+//	}
+//	defer c.Close()
+//	for {
+//		mt, message, err := c.ReadMessage()
+//		if err != nil {
+//			log.Println("read:", err)
+//			break
+//		}
+//		log.Printf("recv: %s", message)
+//		err = c.WriteMessage(mt, message)
+//		if err != nil {
+//			log.Println("write:", err)
+//			break
+//		}
+//	}
+//}
+
+//func home(w http.ResponseWriter, r *http.Request) {
+//	homeTemplate.Execute(w, "ws://"+r.Host+"/echo")
+//}
+
 func main() {
 
 	log.Print("hi!")
@@ -24,7 +55,12 @@ func main() {
 		panic(err)
 	}
 
-	//go observer(ch)
+	//flag.Parse()
+	//log.SetFlags(0)
+	//http.HandleFunc("/echo", echo)
+	//log.Fatal(http.ListenAndServe(*addr, nil))
+	//
+	////go observer(ch)
 	initHttpServer(ch)
 }
 
@@ -45,12 +81,17 @@ func initHttpServer(ch chan Chat) {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = 100
-
 	go setToRedis(ch)
 	ChatHandler(ch)
 	log.Fatal(s.ListenAndServe())
 
+}
+
+func ContentTypeMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Our middleware logic goes here...
+		next.ServeHTTP(w, r)
+	})
 }
 
 type Chat struct {
@@ -66,8 +107,6 @@ func (m *Chat) MarshalBinary() ([]byte, error) {
 func setToRedis(ch chan Chat) {
 	for {
 		message := <-ch
-
-		fmt.Print(message)
 
 		rdb := getRedisClient()
 		err := rdb.Set(message.User, &message, 0).Err()

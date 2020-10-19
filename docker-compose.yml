@@ -7,8 +7,10 @@ services:
     working_dir: /go/src/myapp
     ports:
       - 8074:8074
+#      - 8082:8082
     volumes:
       - .:/go/src/myapp
+
 
   redis:
     build:
