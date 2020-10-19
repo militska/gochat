@@ -5,5 +5,16 @@ services:
       context: ./docker/go
     restart: on-failure
     working_dir: /go/src/myapp
+    ports:
+      - 8074:8074
     volumes:
       - .:/go/src/myapp
+
+  redis:
+    build:
+      context: ./docker/redis
+    ports:
+      - 6379:6379
+#    env_file:
+#      - .env
+    restart: on-failure
