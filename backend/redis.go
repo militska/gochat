@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-redis/redis"
 )
 
@@ -14,6 +15,22 @@ func getRedisClient() *redis.Client {
 		DB:       0,  // use default DB
 	})
 
+}
+
+func setToRedis(ch chan Chat) {
+	for {
+		message := <-ch
+
+		rdb := getRedisClient()
+		err := rdb.Set(message.User, &message, 0).Err()
+
+		if err != nil {
+			fmt.Print(err)
+			panic(err)
+		}
+
+		fmt.Print(rdb.Get("militska"))
+	}
 }
 
 //func ExampleClient() {

@@ -3,13 +3,11 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net"
 	"net/http"
 	"os"
-	"time"
 )
 
 var (
@@ -42,22 +40,9 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
-	log.Print(c)
-	log.Print(time.Now().String())
 	clients[c] = true
-	fmt.Print(clients)
 	for {
 		mt, message, err := c.ReadMessage()
-
-		//for _, element := range x {
-		//	//broadcastMessage := []byte("broadcast from server "  + string(message));
-		//	//err = element.WriteMessage(mt,broadcastMessage)
-		//	if err != nil {
-		//		log.Println("broadcastMessage error write:", err)
-		//		break
-		//	}
-		//}
-
 		if err != nil {
 			log.Println("read:", err)
 			break
@@ -66,7 +51,6 @@ func echo(w http.ResponseWriter, r *http.Request) {
 
 		msg := Message{Message: "from server " + string(message), Username: "militska", Email: "w"}
 		broadcast <- msg
-
 		ownmessage := []byte("from server " + string(message))
 		err = c.WriteMessage(mt, ownmessage)
 		if err != nil {
@@ -78,9 +62,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 
 func handleMessages() {
 	for {
-		// Grab the next message from the broadcast channel
 		msg := <-broadcast
-		// Send it out to every client that is currently connected
 		for client := range clients {
 			err := client.WriteJSON(msg)
 			if err != nil {
@@ -93,13 +75,9 @@ func handleMessages() {
 }
 
 func main() {
-	log.Print("hi!")
-	ch := make(chan Chat, 100)
-
-	fmt.Println("IPv4: ", getIp())
+	log.Print("hi! my ipv4 " + getIp().String())
 
 	go handleMessages()
-	go observer(ch)
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/echo", echo)
@@ -119,30 +97,6 @@ func getIp() net.IP {
 	return nil
 }
 
-// @todo send to queue
-func observer(ch chan Chat) {
-	for {
-		message := <-ch
-
-		//msg := Chat{Message: "ttt", User: "militska", Ip: "11"}
-		//
-		//rdb := getRedisClient()
-		//err := rdb.Set("key2", &msg, 0).Err()
-		//if err != nil {
-		//	panic(err)
-		//}
-
-		fmt.Println("[sender: " + message.User + "] text: " + message.Message)
-	}
-}
-
-func ContentTypeMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Our middleware logic goes here...
-		next.ServeHTTP(w, r)
-	})
-}
-
 type Chat struct {
 	Message string
 	User    string
@@ -151,20 +105,4 @@ type Chat struct {
 
 func (m *Chat) MarshalBinary() ([]byte, error) {
 	return json.Marshal(m)
-}
-
-func setToRedis(ch chan Chat) {
-	for {
-		message := <-ch
-
-		rdb := getRedisClient()
-		err := rdb.Set(message.User, &message, 0).Err()
-
-		if err != nil {
-			fmt.Print(err)
-			panic(err)
-		}
-
-		fmt.Print(rdb.Get("militska"))
-	}
 }
