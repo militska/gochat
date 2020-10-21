@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 )
 
 var (
@@ -20,24 +21,73 @@ var (
 	}
 )
 
+type Message struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Message  string `json:"message"`
+}
+type Connections struct {
+	Con net.Conn
+}
+
+var clients = make(map[*websocket.Conn]bool)
+var broadcast = make(chan Message) // broadcast channel
+
 func echo(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
+
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
 	}
 	defer c.Close()
+
+	log.Print(c)
+	log.Print(time.Now().String())
+	clients[c] = true
+	fmt.Print(clients)
 	for {
 		mt, message, err := c.ReadMessage()
+
+		//for _, element := range x {
+		//	//broadcastMessage := []byte("broadcast from server "  + string(message));
+		//	//err = element.WriteMessage(mt,broadcastMessage)
+		//	if err != nil {
+		//		log.Println("broadcastMessage error write:", err)
+		//		break
+		//	}
+		//}
+
 		if err != nil {
 			log.Println("read:", err)
 			break
 		}
 		log.Printf("recv: %s", message)
-		err = c.WriteMessage(mt, message)
+
+		msg := Message{Message: "from server " + string(message), Username: "militska", Email: "w"}
+		broadcast <- msg
+
+		ownmessage := []byte("from server " + string(message))
+		err = c.WriteMessage(mt, ownmessage)
 		if err != nil {
 			log.Println("write:", err)
 			break
+		}
+	}
+}
+
+func handleMessages() {
+	for {
+		// Grab the next message from the broadcast channel
+		msg := <-broadcast
+		// Send it out to every client that is currently connected
+		for client := range clients {
+			err := client.WriteJSON(msg)
+			if err != nil {
+				log.Printf("error: %v", err)
+				client.Close()
+				delete(clients, client)
+			}
 		}
 	}
 }
@@ -48,10 +98,12 @@ func main() {
 
 	fmt.Println("IPv4: ", getIp())
 
+	go handleMessages()
 	go observer(ch)
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/echo", echo)
+
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 

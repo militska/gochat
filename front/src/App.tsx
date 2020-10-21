@@ -1,8 +1,7 @@
 import React from 'react';
 import './App.css';
 
-var socket = new WebSocket("ws://172.21.0.7:8074/echo");
-
+var socket = new WebSocket("ws://172.21.0.4:8074/echo");
 
 socket.onopen = function() {
   alert("Соединение установлено.");
@@ -21,7 +20,7 @@ socket.onmessage = function(event) {
   window.console.log("Получены данные " + event.data);
   var elements = document.getElementsByClassName("data");
 
-  elements[0].textContent += " \n" + event.data;
+  elements[0].innerHTML += " <br>" + event.data;
 };
 
 socket.onerror = function(error) {
