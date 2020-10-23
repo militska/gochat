@@ -22,11 +22,12 @@ func setToRedis(ch chan Chat) {
 		message := <-ch
 
 		rdb := getRedisClient()
-		err := rdb.Set(message.User, &message, 0).Err()
+		err := rdb.Set(message.Name, &message, 0).Err()
 
 		if err != nil {
 			fmt.Print(err)
 			panic(err)
+
 		}
 
 		fmt.Print(rdb.Get("militska"))

@@ -3,7 +3,7 @@ import React from 'react';
 
 import './App.css';
 
-let socket = new WebSocket("ws://172.20.0.8:8074/chat");
+let socket = new WebSocket("ws://172.20.0.2:8074/echo");
 
 socket.onopen = function () {
     window.alert("Соединение установлено.");
@@ -30,29 +30,22 @@ socket.onerror = function (error) {
     window.alert(error);
 };
 
-type Message = {
-    Name: string;
-    Message: string;
-};
 
 function sendData() {
-    let elName: HTMLInputElement = (document.getElementById("name") as HTMLInputElement);
-    let elMessage: HTMLInputElement = (document.getElementById("message") as HTMLInputElement);
-    if (elName.value && elMessage.value) {
-        let msg: Message = {Name: elName.value, Message: elMessage.value};
-
-        socket.send(JSON.stringify(msg));
+    let el: HTMLInputElement = (document.getElementById("new_value") as HTMLInputElement);
+    if (el.value) {
+        let val: string = el.value;
+        socket.send(val);
     }
 }
 
-export default class TechView extends React.Component<{}, {}> {
+export default class TechView4 extends React.Component<{}, {}> {
     render() {
         return (
-            <div className="Appr">
+            <div className="Appr">rrrrrrrrrrrrrrrrrr
                 <header className="App-header">
                     <p>
-                        <input id={"name"} type="text"/>
-                        <input id={"message"} type="text"/>
+                        <input id={"new_value"} type="text"/>
                         <button onClick={sendData}> Клик</button>
                     </p>
                 </header>
