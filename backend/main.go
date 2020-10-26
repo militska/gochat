@@ -60,6 +60,47 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func chat(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
+
+	if err != nil {
+		log.Print("upgrade:", err)
+		return
+	}
+	defer c.Close()
+
+	clients[c] = true
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			log.Println("read:", err)
+			break
+		}
+		log.Printf("recv: %s", message)
+
+		data := []byte(message)
+
+		var ch Chat
+		err2 := json.Unmarshal(data, &ch)
+
+		if err2 != nil {
+			log.Println("Unmarshal error:", err2)
+			break
+
+		}
+		log.Print("name:  " + ch.Name)
+
+		msg := Message{Message: "from server " + string(message), Username: "militska", Email: "w"}
+		broadcast <- msg
+		ownmessage := []byte("from server " + string(message))
+		err = c.WriteMessage(mt, ownmessage)
+		if err != nil {
+			log.Println("write:", err)
+			break
+		}
+	}
+}
+
 func handleMessages() {
 	for {
 		msg := <-broadcast
@@ -81,6 +122,7 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/echo", echo)
+	http.HandleFunc("/chat", chat)
 
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
@@ -99,8 +141,8 @@ func getIp() net.IP {
 
 type Chat struct {
 	Message string
-	User    string
-	Ip      string
+	Name    string
+	//Ip      string
 }
 
 func (m *Chat) MarshalBinary() ([]byte, error) {
