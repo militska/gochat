@@ -3,7 +3,7 @@ import React from 'react';
 
 import './App.css';
 
-let socket = new WebSocket("ws://172.20.0.8:8074/chat");
+let socket = new WebSocket("ws://172.20.0.17:8074/chat");
 
 socket.onopen = function () {
     window.alert("Соединение установлено.");
