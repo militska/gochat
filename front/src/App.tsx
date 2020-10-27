@@ -3,7 +3,7 @@ import React from 'react';
 
 import './App.css';
 
-let socket = new WebSocket("ws://172.20.0.17:8074/chat");
+let socket = new WebSocket("ws://172.21.0.3:8074/chat");
 
 socket.onopen = function () {
     window.alert("Соединение установлено.");
@@ -31,7 +31,7 @@ socket.onerror = function (error) {
 };
 
 type Message = {
-    Name: string;
+    Username: string;
     Message: string;
 };
 
@@ -39,7 +39,7 @@ function sendData() {
     let elName: HTMLInputElement = (document.getElementById("name") as HTMLInputElement);
     let elMessage: HTMLInputElement = (document.getElementById("message") as HTMLInputElement);
     if (elName.value && elMessage.value) {
-        let msg: Message = {Name: elName.value, Message: elMessage.value};
+        let msg: Message = {Username: elName.value, Message: elMessage.value};
 
         socket.send(JSON.stringify(msg));
     }

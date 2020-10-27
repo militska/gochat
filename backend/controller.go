@@ -27,17 +27,19 @@ func chat(w http.ResponseWriter, r *http.Request) {
 
 		data := []byte(message)
 
-		var ch Chat
-		err2 := json.Unmarshal(data, &ch)
+		var msg Message
+		err2 := json.Unmarshal(data, &msg)
 
 		if err2 != nil {
 			log.Println("Unmarshal error:", err2)
 			break
 
 		}
-		log.Print("name:  " + ch.Name)
 
-		msg := Message{Message: " from server " + string(message), Username: "militska", Email: "w"}
+		log.Print("username " + msg.Username)
+		log.Print("message " + msg.Message)
+
+		toRedis <- msg
 		broadcast <- msg
 		ownmessage := []byte(" hi! :)  from server " + string(message))
 		err = c.WriteMessage(mt, ownmessage)
@@ -66,7 +68,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("recv: %s", message)
 
-		msg := Message{Message: "from server " + string(message), Username: "militska", Email: "w"}
+		msg := Message{Message: "from server " + string(message), Username: "militska"}
 		broadcast <- msg
 		ownmessage := []byte(" hi! 71 :)  from server " + string(message))
 		err = c.WriteMessage(mt, ownmessage)

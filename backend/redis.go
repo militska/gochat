@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-redis/redis"
+	"log"
 )
 
 var ctx = context.Background()
@@ -17,12 +18,12 @@ func getRedisClient() *redis.Client {
 
 }
 
-func setToRedis(ch chan Chat) {
+func setToRedis(ch chan Message) {
 	for {
 		message := <-ch
 
 		rdb := getRedisClient()
-		err := rdb.Set(message.Name, &message, 0).Err()
+		err := rdb.Set(message.Username, &message, 0).Err()
 
 		if err != nil {
 			fmt.Print(err)
@@ -32,6 +33,18 @@ func setToRedis(ch chan Chat) {
 
 		fmt.Print(rdb.Get("militska"))
 	}
+}
+
+func setMsg(message Message) {
+
+	log.Print(message)
+
+	rdb := getRedisClient()
+	err := rdb.Set(message.Username, &message, 0).Err()
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 //func ExampleClient() {
