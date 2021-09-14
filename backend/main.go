@@ -12,7 +12,7 @@ var (
 	addr      = flag.String("addr", getIp().String()+":8074", "http service address")
 	clients   = make(map[*websocket.Conn]bool)
 	broadcast = make(chan Message, 100)
-	toRedis   = make(chan Message, 100)
+	redis     = make(chan Message, 100)
 	upgrader  = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -46,8 +46,8 @@ func broadcastSender() {
 	}
 }
 
-func toRedisHandler() {
-	for recForRedis := range toRedis {
+func redisHandler() {
+	for recForRedis := range redis {
 		setMsg(recForRedis)
 	}
 }
@@ -55,7 +55,7 @@ func toRedisHandler() {
 func main() {
 	log.Print("hi! my ipv4 " + getIp().String())
 	go broadcastSender()
-	go toRedisHandler()
+	go redisHandler()
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/echo", echo)
